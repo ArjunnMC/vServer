@@ -25,6 +25,8 @@ public class Server {
             e.printStackTrace();
         }
 
+        new RequestMaker(this).start();
+
         while (true) {
             try {
                 socket = serverSocket.accept();
@@ -34,9 +36,6 @@ public class Server {
             }
             // new thread for a client
             new ServerThread(socket).start();
-
-            new RequestMaker(this).start();
-
         }
     }
 
@@ -88,7 +87,7 @@ public class Server {
             thread.sendData(ack);
         } else if (event.equalsIgnoreCase("disconnect")) {
             thread.disconnect();
-        } else if (event.equalsIgnoreCase("echo")) {
+        } else if (event.equalsIgnoreCase("echo" ) && type.equals("request")) {
             JSONObject response = new JSONObject();
             response.put("type", "response");
             response.put("event", "echo");
