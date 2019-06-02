@@ -6,12 +6,11 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
-import java.util.concurrent.CompletableFuture;
 
 public class Server {
 
-    protected static HashMap<String, ServerThread> servers = new HashMap<>();
-    private static HashMap<String, CompletableFuture<String>> futuresToResolve = new HashMap<>();
+    protected static HashMap<String, ClientConnection> servers = new HashMap<>();
+    private static HashMap<String, Request<JSONObject>> futuresToResolve = new HashMap<>();
 
     static final int PORT = 9093;
 
@@ -25,6 +24,7 @@ public class Server {
             e.printStackTrace();
         }
 
+        // takes user console input and sends it as echos.
         new RequestMaker(this).start();
 
         while (true) {
@@ -34,8 +34,8 @@ public class Server {
             } catch (IOException e) {
                 System.out.println("I/O error: " + e);
             }
-            // new thread for a client
-            new ServerThread(socket).start();
+            // new thread for the client
+            new ClientConnection(socket).start();
         }
     }
 
@@ -43,18 +43,18 @@ public class Server {
         new Server();
     }
 
-    public static void addServer(String server, ServerThread thread) {
+    public static void addServer(String server, ClientConnection thread) {
         servers.put(server, thread);
         System.out.println("Client has connected: " + servers.keySet().toString());
     }
 
-    public static void removeClient(ServerThread thread) {
+    public static void removeClient(ClientConnection thread) {
         servers.values().remove(thread);
         System.out.println("Client has disconnected: " + servers.toString());
     }
 
-    public CompletableFuture<String> getStringFromClient(String client, JSONObject request) {
-        CompletableFuture<String> response = new CompletableFuture<>();
+    public Request<String> getStringFromClient(String client, JSONObject request) {
+        Request<String> response = new Request<>();
         futuresToResolve.put(request.getString("responseID"), response);
 
         servers.get(client).sendData(request);
@@ -63,7 +63,9 @@ public class Server {
 
     }
 
-    public static void handle(JSONObject sent, ServerThread thread) {
+    public Request<JSONObject>
+
+    public static void handle(JSONObject sent, ClientConnection thread) {
 
         System.out.println(sent);
         String type = sent.getString("type");
@@ -73,8 +75,9 @@ public class Server {
 
         if (sent.has("responseID") && type.equals("response")) {
             if (futuresToResolve.containsKey(sent.getString("responseID"))) {
-                futuresToResolve.get(sent.getString("responseID")).complete(sent.getString("data"));
+                futuresToResolve.get(sent.getString("responseID")).setResponse(sent);
             }
+            return;
         }
 
         if (event.equalsIgnoreCase("connect")) {

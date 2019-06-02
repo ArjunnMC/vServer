@@ -37,7 +37,7 @@ public class RequestMaker extends Thread {
                     for (String serverName : Server.servers.keySet()) {
                         long start = System.currentTimeMillis();
                         System.out.println("SENDING TO " + serverName);
-                        String response = server.getStringFromClient(serverName, request).get(20, TimeUnit.MILLISECONDS);
+                        String response = server.getStringFromClient(serverName, request).getResponse();
                         System.out.println(response);
                         System.out.println("Response time: " + (System.currentTimeMillis() - start) + " milliseconds.");
                     }
