@@ -51,6 +51,28 @@ public class ClientConnection extends Thread {
         this.out.println(object.toString());
     }
 
+    public Request<JSONObject> sendRequest(JSONObject request) {
+
+        Request<JSONObject> response = new Request<>();
+        request.put("type", "request");
+        request.put("responseID", UUID.randomUUID().toString());
+        Server.futuresToResolve.put(request.getString("responseID"), response);
+
+        sendData(request);
+
+        return response;
+
+    }
+
+    public void sendResponse(JSONObject received, JSONObject response) {
+
+        response.put("type", "response");
+        response.put("responseID", received.getString("responseID"));
+
+        sendData(response);
+
+    }
+
     public void disconnect() {
         try {
             JSONObject disconnect = new JSONObject();

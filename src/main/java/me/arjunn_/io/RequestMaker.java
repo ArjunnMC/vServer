@@ -26,19 +26,15 @@ public class RequestMaker extends Thread {
                 String send = in.readLine();
                 System.out.println("Got input " + send);
                 JSONObject request = new JSONObject();
-                request.put("type", "request");
                 request.put("event", "echo");
                 request.put("data", send);
-                request.put("responseID", UUID.randomUUID().toString());
-                System.out.println(request.getString("responseID"));
 
                 try {
                     System.out.println("Sending messages to " + Server.servers.keySet().toString());
                     for (String serverName : Server.servers.keySet()) {
                         long start = System.currentTimeMillis();
                         System.out.println("SENDING TO " + serverName);
-                        String response = server.getStringFromClient(serverName, request).getResponse();
-                        System.out.println(response);
+                        JSONObject response = Server.getClientConnection(serverName).sendRequest(request).getResponse();
                         System.out.println("Response time: " + (System.currentTimeMillis() - start) + " milliseconds.");
                     }
                 } catch (Exception e) {

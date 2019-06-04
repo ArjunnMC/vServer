@@ -20,6 +20,7 @@ public class Request<T> {
             return result.get(40, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             e.printStackTrace();
+            Server.futuresToResolve.values().remove(this);
         }
         return null;
     }

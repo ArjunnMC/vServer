@@ -5,12 +5,14 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 
 public class Server {
 
     protected static HashMap<String, ClientConnection> servers = new HashMap<>();
-    private static HashMap<String, Request<JSONObject>> futuresToResolve = new HashMap<>();
+    public static HashMap<String, Request<JSONObject>> futuresToResolve = new HashMap<>();
 
     static final int PORT = 9093;
 
@@ -53,8 +55,8 @@ public class Server {
         System.out.println("Client has disconnected: " + servers.toString());
     }
 
-    public Request<String> getStringFromClient(String client, JSONObject request) {
-        Request<String> response = new Request<>();
+    public Request<JSONObject> getStringFromClient(String client, JSONObject request) {
+        Request<JSONObject> response = new Request<>();
         futuresToResolve.put(request.getString("responseID"), response);
 
         servers.get(client).sendData(request);
@@ -63,40 +65,58 @@ public class Server {
 
     }
 
-    public Request<JSONObject>
+    public static ClientConnection getClientConnection(String name) {
+        return servers.get(name);
+    }
 
-    public static void handle(JSONObject sent, ClientConnection thread) {
+    public static Collection<ClientConnection> getClientConnections() {
+        return servers.values();
+    }
 
-        System.out.println(sent);
-        String type = sent.getString("type");
-        String event = sent.getString("event");
-        String responseID = sent.getString("responseID");
+    public static void handle(JSONObject received, ClientConnection thread) {
 
+        if (!received.has("type")) {
+            System.out.println("Received data with no type - ignoring. " + received);
+            return;
+        }
 
-        if (sent.has("responseID") && type.equals("response")) {
-            if (futuresToResolve.containsKey(sent.getString("responseID"))) {
-                futuresToResolve.get(sent.getString("responseID")).setResponse(sent);
+        String type = received.getString("type");
+
+        if (type.equals("response")) {
+            if (!received.has("responseID")) {
+                System.out.println("Received response without a responseID - ignoring. " + received);
+            } else if (futuresToResolve.containsKey(received.getString("responseID"))) {
+                futuresToResolve.get(received.getString("responseID")).setResponse(received);
+                futuresToResolve.remove(received.getString("responseID"));
+            } else {
+                System.out.println("Got a response for a non-existant request! Request either never existed or has timed out.");
             }
             return;
         }
 
+        if (!received.has("event")) {
+            System.out.println("Received a request without an event: " + received);
+            return;
+        }
+
+        // Received a valid request
+        String event = received.getString("event");
+
+        // Begin handling based on event name
+
         if (event.equalsIgnoreCase("connect")) {
-            addServer(sent.getString("name"), thread);
-            JSONObject ack = new JSONObject();
-            ack.put("type", "response");
-            ack.put("event", "connect");
-            ack.put("status", "connected");
-            ack.put("responseID", "000");
-            thread.sendData(ack);
+            addServer(received.getString("name"), thread);
+            JSONObject response = new JSONObject();
+            response.put("event", "connect");
+            response.put("status", "connected");
+            thread.sendResponse(received, response);
         } else if (event.equalsIgnoreCase("disconnect")) {
             thread.disconnect();
-        } else if (event.equalsIgnoreCase("echo" ) && type.equals("request")) {
+        } else if (event.equalsIgnoreCase("echo" )) {
             JSONObject response = new JSONObject();
-            response.put("type", "response");
             response.put("event", "echo");
-            response.put("data", sent.getString("data"));
-            response.put("responseID", sent.getString("responseID"));
-            thread.sendData(response);
+            response.put("data", received.getString("data"));
+            thread.sendResponse(received, response);
         }
 
     }
