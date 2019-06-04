@@ -29,6 +29,8 @@ public class Server {
         // takes user console input and sends it as echos.
         new RequestMaker(this).start();
 
+        System.out.println("[vServer] server has been initialized.");
+
         while (true) {
             try {
                 socket = serverSocket.accept();
@@ -103,6 +105,8 @@ public class Server {
         String event = received.getString("event");
 
         // Begin handling based on event name
+
+        System.out.println("Received request: " + received);
 
         if (event.equalsIgnoreCase("connect")) {
             addServer(received.getString("name"), thread);
