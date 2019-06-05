@@ -1,17 +1,19 @@
-package me.arjunn_.io;
+package me.arjunn_;
 
+import me.arjunn_.threads.ClientConnection;
+import me.arjunn_.threads.RequestMaker;
+import me.arjunn_.type.Request;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
 public class Server {
 
-    protected static HashMap<String, ClientConnection> servers = new HashMap<>();
+    public static HashMap<String, ClientConnection> servers = new HashMap<>();
     public static HashMap<String, Request<JSONObject>> futuresToResolve = new HashMap<>();
 
     static final int PORT = 9093;

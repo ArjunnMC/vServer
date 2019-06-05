@@ -1,4 +1,6 @@
-package me.arjunn_.io;
+package me.arjunn_.type;
+
+import me.arjunn_.Server;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
