@@ -121,6 +121,11 @@ public class Server {
             response.put("event", "echo");
             response.put("data", received.getString("data"));
             thread.sendResponse(received, response);
+        } else if (event.equalsIgnoreCase("add")) {
+            JSONObject response = new JSONObject();
+            response.put("event", "add");
+            response.put("data", received.getString("data") + " ADD");
+            thread.sendResponse(received, response);
         }
 
     }
